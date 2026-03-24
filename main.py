@@ -10,6 +10,7 @@ load_dotenv()
 
 from app.db import Base, engine, get_db
 from app.notification.telegram import Telegram
+from app.notification.mattermost import Mattermost
 from app.tsystem.cerb import Cerb
 from app.tsystem.guru import Guru
 from app.utils import am_i_working_now
@@ -68,9 +69,16 @@ def main():
     ]
 
     # notification handler
-    notification = Telegram(
-        token=os.getenv('TELEGRAM_TOKEN'), chat_id=os.getenv('TELEGRAM_CHAT_ID')
-    )
+    notify_handlers = {
+        # Telegram(
+        #     token=os.getenv('TELEGRAM_TOKEN'), chat_id=os.getenv('TELEGRAM_CHAT_ID')
+        # ),
+        Mattermost(
+            server=os.getenv('MM_SERVER'),
+            token=os.getenv('MM_TOKEN'),
+            channel_id=os.getenv('MM_CHANNEL'),
+        ),
+    }
 
     # Main loop
     while True:
@@ -90,7 +98,8 @@ def main():
                     for ticket in ticket_system.process_tickets(db_session):
                         # skip notify
                         if ticket.spam_score <= int(os.getenv('NOTIFY_MAX_SCORE')):
-                            notification.notify(ticket)
+                            for notify_handler in notify_handlers:
+                                notify_handler.notify(ticket)
 
         except Exception as e:
             log.error(e)

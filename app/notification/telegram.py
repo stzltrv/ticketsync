@@ -22,5 +22,7 @@ class Telegram(BaseClass):
         }
 
         requests.post(
-            f'https://api.telegram.org/bot{self.BOT_TOKEN}/sendMessage', data=data
+            f'https://api.telegram.org/bot{self.BOT_TOKEN}/sendMessage',
+            data=data,
+            proxies=dict(https='socks5://127.0.0.1:1080'),
         )
